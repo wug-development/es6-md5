@@ -31,7 +31,7 @@
     blocks = new Uint32Array(buffer);
   }
 
-  const isArray = Array.isArray;
+  let isArray = Array.isArray;
   if (root.JS_MD5_NO_NODE_JS || !isArray) {
     isArray = function(obj) {
       return Object.prototype.toString.call(obj) === '[object Array]';
@@ -70,7 +70,7 @@
   };
 
   const createMethod = function() {
-    const method = createOutputMethod('hex');
+    let method = createOutputMethod('hex');
     if (NODE_JS) {
       method = nodeWrap(method);
     }
@@ -80,7 +80,7 @@
     method.update = function(message) {
       return method.create().update(message);
     };
-    for (const i = 0; i < OUTPUT_TYPES.length; ++i) {
+    for (let i = 0; i < OUTPUT_TYPES.length; ++i) {
       const type = OUTPUT_TYPES[i];
       method[type] = createOutputMethod(type);
     }
