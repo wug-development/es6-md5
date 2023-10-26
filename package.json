@@ -1,6 +1,6 @@
 {
   "name": "es6-md5",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "",
   "main": "dist/cjs/index.js",
   "types": "dist/cjs/index.d.ts",
@@ -14,7 +14,11 @@
     "type": "git",
     "url": "git+https://github.com/wug-development/es6-md5.git"
   },
-  "keywords": ["md5", "es6", "typescript"],
+  "keywords": [
+    "md5",
+    "es6",
+    "typescript"
+  ],
   "authors": [
     "guang.wu"
   ],
