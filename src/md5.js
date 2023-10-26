@@ -1,62 +1,53 @@
-/**
- * [js-md5]{@link https://github.com/emn178/js-md5}
- *
- * @namespace md5
- * @version 0.8.3
- * @author Chen, Yi-Cyuan [emn178@gmail.com]
- * @copyright Chen, Yi-Cyuan 2014-2023
- * @license MIT
- */
-(function () {
+(() => {
   'use strict';
 
-  var INPUT_ERROR = 'input is invalid type';
-  var FINALIZE_ERROR = 'finalize already called';
-  var WINDOW = typeof window === 'object';
-  var root = WINDOW ? window : {};
+  const INPUT_ERROR = 'input is invalid type';
+  const FINALIZE_ERROR = 'finalize already called';
+  let WINDOW = typeof window === 'object';
+  let root = WINDOW ? window : {};
   if (root.JS_MD5_NO_WINDOW) {
     WINDOW = false;
   }
-  var WEB_WORKER = !WINDOW && typeof self === 'object';
-  var NODE_JS = !root.JS_MD5_NO_NODE_JS && typeof process === 'object' && process.versions && process.versions.node;
+  const WEB_WORKER = !WINDOW && typeof self === 'object';
+  const NODE_JS = !root.JS_MD5_NO_NODE_JS && typeof process === 'object' && process.versions && process.versions.node;
   if (NODE_JS) {
     root = global;
   } else if (WEB_WORKER) {
     root = self;
   }
-  var COMMON_JS = !root.JS_MD5_NO_COMMON_JS && typeof module === 'object' && module.exports;
-  var AMD = typeof define === 'function' && define.amd;
-  var ARRAY_BUFFER = !root.JS_MD5_NO_ARRAY_BUFFER && typeof ArrayBuffer !== 'undefined';
-  var HEX_CHARS = '0123456789abcdef'.split('');
-  var EXTRA = [128, 32768, 8388608, -2147483648];
-  var SHIFT = [0, 8, 16, 24];
-  var OUTPUT_TYPES = ['hex', 'array', 'digest', 'buffer', 'arrayBuffer', 'base64'];
-  var BASE64_ENCODE_CHAR = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'.split('');
+  const COMMON_JS = !root.JS_MD5_NO_COMMON_JS && typeof module === 'object' && module.exports;
+  const AMD = typeof define === 'function' && define.amd;
+  const ARRAY_BUFFER = !root.JS_MD5_NO_ARRAY_BUFFER && typeof ArrayBuffer !== 'undefined';
+  const HEX_CHARS = '0123456789abcdef'.split('');
+  const EXTRA = [128, 32768, 8388608, -2147483648];
+  const SHIFT = [0, 8, 16, 24];
+  const OUTPUT_TYPES = ['hex', 'array', 'digest', 'buffer', 'arrayBuffer', 'base64'];
+  const BASE64_ENCODE_CHAR = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'.split('');
 
-  var blocks = [], buffer8;
+  let blocks = [], buffer8;
   if (ARRAY_BUFFER) {
-    var buffer = new ArrayBuffer(68);
+    const buffer = new ArrayBuffer(68);
     buffer8 = new Uint8Array(buffer);
     blocks = new Uint32Array(buffer);
   }
 
-  var isArray = Array.isArray;
+  const isArray = Array.isArray;
   if (root.JS_MD5_NO_NODE_JS || !isArray) {
-    isArray = function (obj) {
+    isArray = function(obj) {
       return Object.prototype.toString.call(obj) === '[object Array]';
     };
   }
 
-  var isView = ArrayBuffer.isView;
+  let isView = ArrayBuffer.isView;
   if (ARRAY_BUFFER && (root.JS_MD5_NO_ARRAY_BUFFER_IS_VIEW || !isView)) {
-    isView = function (obj) {
+    isView = function(obj) {
       return typeof obj === 'object' && obj.buffer && obj.buffer.constructor === ArrayBuffer;
     };
   }
 
   // [message: string, isString: bool]
-  var formatMessage = function (message) {
-    var type = typeof message;
+  const formatMessage = function(message) {
+    const type = typeof message;
     if (type === 'string') {
       return [message, true];
     }
@@ -72,127 +63,48 @@
     return [message, false];
   }
 
-  /**
-   * @method hex
-   * @memberof md5
-   * @description Output hash as hex string
-   * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
-   * @returns {String} Hex string
-   * @example
-   * md5.hex('The quick brown fox jumps over the lazy dog');
-   * // equal to
-   * md5('The quick brown fox jumps over the lazy dog');
-   */
-  /**
-   * @method digest
-   * @memberof md5
-   * @description Output hash as bytes array
-   * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
-   * @returns {Array} Bytes array
-   * @example
-   * md5.digest('The quick brown fox jumps over the lazy dog');
-   */
-  /**
-   * @method array
-   * @memberof md5
-   * @description Output hash as bytes array
-   * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
-   * @returns {Array} Bytes array
-   * @example
-   * md5.array('The quick brown fox jumps over the lazy dog');
-   */
-  /**
-   * @method arrayBuffer
-   * @memberof md5
-   * @description Output hash as ArrayBuffer
-   * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
-   * @returns {ArrayBuffer} ArrayBuffer
-   * @example
-   * md5.arrayBuffer('The quick brown fox jumps over the lazy dog');
-   */
-  /**
-   * @method buffer
-   * @deprecated This maybe confuse with Buffer in node.js. Please use arrayBuffer instead.
-   * @memberof md5
-   * @description Output hash as ArrayBuffer
-   * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
-   * @returns {ArrayBuffer} ArrayBuffer
-   * @example
-   * md5.buffer('The quick brown fox jumps over the lazy dog');
-   */
-  /**
-   * @method base64
-   * @memberof md5
-   * @description Output hash as base64 string
-   * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
-   * @returns {String} base64 string
-   * @example
-   * md5.base64('The quick brown fox jumps over the lazy dog');
-   */
-  var createOutputMethod = function (outputType) {
-    return function (message) {
+  const createOutputMethod = function(outputType) {
+    return function(message) {
       return new Md5(true).update(message)[outputType]();
     };
   };
 
-  /**
-   * @method create
-   * @memberof md5
-   * @description Create Md5 object
-   * @returns {Md5} Md5 object.
-   * @example
-   * var hash = md5.create();
-   */
-  /**
-   * @method update
-   * @memberof md5
-   * @description Create and update Md5 object
-   * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
-   * @returns {Md5} Md5 object.
-   * @example
-   * var hash = md5.update('The quick brown fox jumps over the lazy dog');
-   * // equal to
-   * var hash = md5.create();
-   * hash.update('The quick brown fox jumps over the lazy dog');
-   */
-  var createMethod = function () {
-    var method = createOutputMethod('hex');
+  const createMethod = function() {
+    const method = createOutputMethod('hex');
     if (NODE_JS) {
       method = nodeWrap(method);
     }
-    method.create = function () {
+    method.create = function() {
       return new Md5();
     };
-    method.update = function (message) {
+    method.update = function(message) {
       return method.create().update(message);
     };
-    for (var i = 0; i < OUTPUT_TYPES.length; ++i) {
-      var type = OUTPUT_TYPES[i];
+    for (const i = 0; i < OUTPUT_TYPES.length; ++i) {
+      const type = OUTPUT_TYPES[i];
       method[type] = createOutputMethod(type);
     }
     return method;
   };
 
-  var nodeWrap = function (method) {
-    var crypto = require('crypto')
-    var Buffer = require('buffer').Buffer;
-    var bufferFrom;
+  const nodeWrap = function(method) {
+    const crypto = require('crypto')
+    const Buffer = require('buffer').Buffer;
+    let bufferFrom;
     if (Buffer.from && !root.JS_MD5_NO_BUFFER_FROM) {
       bufferFrom = Buffer.from;
     } else {
-      bufferFrom = function (message) {
+      bufferFrom = function(message) {
         return new Buffer(message);
       };
     }
-    var nodeMethod = function (message) {
+    const nodeMethod = function(message) {
       if (typeof message === 'string') {
         return crypto.createHash('md5').update(message, 'utf8').digest('hex');
-      } else {
-        if (message === null || message === undefined) {
-          throw new Error(INPUT_ERROR);
-        } else if (message.constructor === ArrayBuffer) {
-          message = new Uint8Array(message);
-        }
+      } else if (message === null || message === undefined) {
+        throw new Error(INPUT_ERROR);
+      } else if (message.constructor === ArrayBuffer) {
+        message = new Uint8Array(message);
       }
       if (isArray(message) || isView(message) ||
         message.constructor === Buffer) {
@@ -204,172 +116,66 @@
     return nodeMethod;
   };
 
-  /**
-   * @namespace md5.hmac
-   */
-  /**
-   * @method hex
-   * @memberof md5.hmac
-   * @description Output hash as hex string
-   * @param {String|Array|Uint8Array|ArrayBuffer} key key
-   * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
-   * @returns {String} Hex string
-   * @example
-   * md5.hmac.hex('key', 'The quick brown fox jumps over the lazy dog');
-   * // equal to
-   * md5.hmac('key', 'The quick brown fox jumps over the lazy dog');
-   */
-
-  /**
-   * @method digest
-   * @memberof md5.hmac
-   * @description Output hash as bytes array
-   * @param {String|Array|Uint8Array|ArrayBuffer} key key
-   * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
-   * @returns {Array} Bytes array
-   * @example
-   * md5.hmac.digest('key', 'The quick brown fox jumps over the lazy dog');
-   */
-  /**
-   * @method array
-   * @memberof md5.hmac
-   * @description Output hash as bytes array
-   * @param {String|Array|Uint8Array|ArrayBuffer} key key
-   * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
-   * @returns {Array} Bytes array
-   * @example
-   * md5.hmac.array('key', 'The quick brown fox jumps over the lazy dog');
-   */
-  /**
-   * @method arrayBuffer
-   * @memberof md5.hmac
-   * @description Output hash as ArrayBuffer
-   * @param {String|Array|Uint8Array|ArrayBuffer} key key
-   * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
-   * @returns {ArrayBuffer} ArrayBuffer
-   * @example
-   * md5.hmac.arrayBuffer('key', 'The quick brown fox jumps over the lazy dog');
-   */
-  /**
-   * @method buffer
-   * @deprecated This maybe confuse with Buffer in node.js. Please use arrayBuffer instead.
-   * @memberof md5.hmac
-   * @description Output hash as ArrayBuffer
-   * @param {String|Array|Uint8Array|ArrayBuffer} key key
-   * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
-   * @returns {ArrayBuffer} ArrayBuffer
-   * @example
-   * md5.hmac.buffer('key', 'The quick brown fox jumps over the lazy dog');
-   */
-  /**
-   * @method base64
-   * @memberof md5.hmac
-   * @description Output hash as base64 string
-   * @param {String|Array|Uint8Array|ArrayBuffer} key key
-   * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
-   * @returns {String} base64 string
-   * @example
-   * md5.hmac.base64('key', 'The quick brown fox jumps over the lazy dog');
-   */
-  var createHmacOutputMethod = function (outputType) {
-    return function (key, message) {
+  const createHmacOutputMethod = function(outputType) {
+    return function(key, message) {
       return new HmacMd5(key, true).update(message)[outputType]();
     };
   };
 
-  /**
-   * @method create
-   * @memberof md5.hmac
-   * @description Create HmacMd5 object
-   * @param {String|Array|Uint8Array|ArrayBuffer} key key
-   * @returns {HmacMd5} HmacMd5 object.
-   * @example
-   * var hash = md5.hmac.create('key');
-   */
-  /**
-   * @method update
-   * @memberof md5.hmac
-   * @description Create and update HmacMd5 object
-   * @param {String|Array|Uint8Array|ArrayBuffer} key key
-   * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
-   * @returns {HmacMd5} HmacMd5 object.
-   * @example
-   * var hash = md5.hmac.update('key', 'The quick brown fox jumps over the lazy dog');
-   * // equal to
-   * var hash = md5.hmac.create('key');
-   * hash.update('The quick brown fox jumps over the lazy dog');
-   */
-  var createHmacMethod = function () {
-    var method = createHmacOutputMethod('hex');
-    method.create = function (key) {
+  const createHmacMethod = function() {
+    const method = createHmacOutputMethod('hex');
+    method.create = function(key) {
       return new HmacMd5(key);
     };
-    method.update = function (key, message) {
+    method.update = function(key, message) {
       return method.create(key).update(message);
     };
-    for (var i = 0; i < OUTPUT_TYPES.length; ++i) {
-      var type = OUTPUT_TYPES[i];
+    for (const element of OUTPUT_TYPES) {
+      const type = element;
       method[type] = createHmacOutputMethod(type);
     }
     return method;
   };
 
-  /**
-   * Md5 class
-   * @class Md5
-   * @description This is internal class.
-   * @see {@link md5.create}
-   */
   function Md5(sharedMemory) {
     if (sharedMemory) {
       blocks[0] = blocks[16] = blocks[1] = blocks[2] = blocks[3] =
-      blocks[4] = blocks[5] = blocks[6] = blocks[7] =
-      blocks[8] = blocks[9] = blocks[10] = blocks[11] =
-      blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;
+        blocks[4] = blocks[5] = blocks[6] = blocks[7] =
+        blocks[8] = blocks[9] = blocks[10] = blocks[11] =
+        blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;
       this.blocks = blocks;
       this.buffer8 = buffer8;
+    } else if (ARRAY_BUFFER) {
+      const buffer = new ArrayBuffer(68);
+      this.buffer8 = new Uint8Array(buffer);
+      this.blocks = new Uint32Array(buffer);
     } else {
-      if (ARRAY_BUFFER) {
-        var buffer = new ArrayBuffer(68);
-        this.buffer8 = new Uint8Array(buffer);
-        this.blocks = new Uint32Array(buffer);
-      } else {
-        this.blocks = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-      }
+      this.blocks = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     }
     this.h0 = this.h1 = this.h2 = this.h3 = this.start = this.bytes = this.hBytes = 0;
     this.finalized = this.hashed = false;
     this.first = true;
   }
 
-  /**
-   * @method update
-   * @memberof Md5
-   * @instance
-   * @description Update hash
-   * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
-   * @returns {Md5} Md5 object.
-   * @see {@link md5.update}
-   */
-  Md5.prototype.update = function (message) {
+  Md5.prototype.update = function(message) {
     if (this.finalized) {
       throw new Error(FINALIZE_ERROR);
     }
 
-    var result = formatMessage(message);
+    const result = formatMessage(message);
     message = result[0];
-    var isString = result[1];
-    var code, index = 0, i, length = message.length, blocks = this.blocks;
-    var buffer8 = this.buffer8;
+    const isString = result[1];
+    let code, index = 0, i, length = message.length, blocks = this.blocks;
+    const buffer8 = this.buffer8;
 
     while (index < length) {
       if (this.hashed) {
         this.hashed = false;
         blocks[0] = blocks[16];
         blocks[16] = blocks[1] = blocks[2] = blocks[3] =
-        blocks[4] = blocks[5] = blocks[6] = blocks[7] =
-        blocks[8] = blocks[9] = blocks[10] = blocks[11] =
-        blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;
+          blocks[4] = blocks[5] = blocks[6] = blocks[7] =
+          blocks[8] = blocks[9] = blocks[10] = blocks[11] =
+          blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;
       }
 
       if (isString) {
@@ -414,15 +220,13 @@
             }
           }
         }
+      } else if (ARRAY_BUFFER) {
+        for (i = this.start; index < length && i < 64; ++index) {
+          buffer8[i++] = message[index];
+        }
       } else {
-        if (ARRAY_BUFFER) {
-          for (i = this.start; index < length && i < 64; ++index) {
-            buffer8[i++] = message[index];
-          }
-        } else {
-          for (i = this.start; index < length && i < 64; ++index) {
-            blocks[i >>> 2] |= message[index] << SHIFT[i++ & 3];
-          }
+        for (i = this.start; index < length && i < 64; ++index) {
+          blocks[i >>> 2] |= message[index] << SHIFT[i++ & 3];
         }
       }
       this.lastByteIndex = i;
@@ -442,12 +246,12 @@
     return this;
   };
 
-  Md5.prototype.finalize = function () {
+  Md5.prototype.finalize = function() {
     if (this.finalized) {
       return;
     }
     this.finalized = true;
-    var blocks = this.blocks, i = this.lastByteIndex;
+    const blocks = this.blocks, i = this.lastByteIndex;
     blocks[i >>> 2] |= EXTRA[i & 3];
     if (i >= 56) {
       if (!this.hashed) {
@@ -455,17 +259,17 @@
       }
       blocks[0] = blocks[16];
       blocks[16] = blocks[1] = blocks[2] = blocks[3] =
-      blocks[4] = blocks[5] = blocks[6] = blocks[7] =
-      blocks[8] = blocks[9] = blocks[10] = blocks[11] =
-      blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;
+        blocks[4] = blocks[5] = blocks[6] = blocks[7] =
+        blocks[8] = blocks[9] = blocks[10] = blocks[11] =
+        blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;
     }
     blocks[14] = this.bytes << 3;
     blocks[15] = this.hBytes << 3 | this.bytes >>> 29;
     this.hash();
   };
 
-  Md5.prototype.hash = function () {
-    var a, b, c, d, bc, da, blocks = this.blocks;
+  Md5.prototype.hash = function() {
+    let a, b, c, d, bc, da, blocks = this.blocks;
 
     if (this.first) {
       a = blocks[0] - 680876937;
@@ -644,10 +448,10 @@
    * @example
    * hash.hex();
    */
-  Md5.prototype.hex = function () {
+  Md5.prototype.hex = function() {
     this.finalize();
 
-    var h0 = this.h0, h1 = this.h1, h2 = this.h2, h3 = this.h3;
+    const h0 = this.h0, h1 = this.h1, h2 = this.h2, h3 = this.h3;
 
     return HEX_CHARS[(h0 >>> 4) & 0x0F] + HEX_CHARS[h0 & 0x0F] +
       HEX_CHARS[(h0 >>> 12) & 0x0F] + HEX_CHARS[(h0 >>> 8) & 0x0F] +
@@ -667,32 +471,12 @@
       HEX_CHARS[(h3 >>> 28) & 0x0F] + HEX_CHARS[(h3 >>> 24) & 0x0F];
   };
 
-  /**
-   * @method toString
-   * @memberof Md5
-   * @instance
-   * @description Output hash as hex string
-   * @returns {String} Hex string
-   * @see {@link md5.hex}
-   * @example
-   * hash.toString();
-   */
   Md5.prototype.toString = Md5.prototype.hex;
 
-  /**
-   * @method digest
-   * @memberof Md5
-   * @instance
-   * @description Output hash as bytes array
-   * @returns {Array} Bytes array
-   * @see {@link md5.digest}
-   * @example
-   * hash.digest();
-   */
-  Md5.prototype.digest = function () {
+  Md5.prototype.digest = function() {
     this.finalize();
 
-    var h0 = this.h0, h1 = this.h1, h2 = this.h2, h3 = this.h3;
+    const h0 = this.h0, h1 = this.h1, h2 = this.h2, h3 = this.h3;
     return [
       h0 & 0xFF, (h0 >>> 8) & 0xFF, (h0 >>> 16) & 0xFF, (h0 >>> 24) & 0xFF,
       h1 & 0xFF, (h1 >>> 8) & 0xFF, (h1 >>> 16) & 0xFF, (h1 >>> 24) & 0xFF,
@@ -701,33 +485,13 @@
     ];
   };
 
-  /**
-   * @method array
-   * @memberof Md5
-   * @instance
-   * @description Output hash as bytes array
-   * @returns {Array} Bytes array
-   * @see {@link md5.array}
-   * @example
-   * hash.array();
-   */
   Md5.prototype.array = Md5.prototype.digest;
 
-  /**
-   * @method arrayBuffer
-   * @memberof Md5
-   * @instance
-   * @description Output hash as ArrayBuffer
-   * @returns {ArrayBuffer} ArrayBuffer
-   * @see {@link md5.arrayBuffer}
-   * @example
-   * hash.arrayBuffer();
-   */
-  Md5.prototype.arrayBuffer = function () {
+  Md5.prototype.arrayBuffer = function() {
     this.finalize();
 
-    var buffer = new ArrayBuffer(16);
-    var blocks = new Uint32Array(buffer);
+    const buffer = new ArrayBuffer(16);
+    const blocks = new Uint32Array(buffer);
     blocks[0] = this.h0;
     blocks[1] = this.h1;
     blocks[2] = this.h2;
@@ -735,32 +499,11 @@
     return buffer;
   };
 
-  /**
-   * @method buffer
-   * @deprecated This maybe confuse with Buffer in node.js. Please use arrayBuffer instead.
-   * @memberof Md5
-   * @instance
-   * @description Output hash as ArrayBuffer
-   * @returns {ArrayBuffer} ArrayBuffer
-   * @see {@link md5.buffer}
-   * @example
-   * hash.buffer();
-   */
   Md5.prototype.buffer = Md5.prototype.arrayBuffer;
 
-  /**
-   * @method base64
-   * @memberof Md5
-   * @instance
-   * @description Output hash as base64 string
-   * @returns {String} base64 string
-   * @see {@link md5.base64}
-   * @example
-   * hash.base64();
-   */
-  Md5.prototype.base64 = function () {
-    var v1, v2, v3, base64Str = '', bytes = this.array();
-    for (var i = 0; i < 15;) {
+  Md5.prototype.base64 = function() {
+    let v1, v2, v3, base64Str = '', bytes = this.array();
+    for (let i = 0; i < 15;) {
       v1 = bytes[i++];
       v2 = bytes[i++];
       v3 = bytes[i++];
@@ -776,18 +519,11 @@
     return base64Str;
   };
 
-  /**
-   * HmacMd5 class
-   * @class HmacMd5
-   * @extends Md5
-   * @description This is internal class.
-   * @see {@link md5.hmac.create}
-   */
   function HmacMd5(key, sharedMemory) {
-    var i, result = formatMessage(key);
+    let i, result = formatMessage(key);
     key = result[0];
     if (result[1]) {
-      var bytes = [], length = key.length, index = 0, code;
+      let bytes = [], length = key.length, index = 0, code;
       for (i = 0; i < length; ++i) {
         code = key.charCodeAt(i);
         if (code < 0x80) {
@@ -814,9 +550,9 @@
       key = (new Md5(true)).update(key).array();
     }
 
-    var oKeyPad = [], iKeyPad = [];
+    const oKeyPad = [], iKeyPad = [];
     for (i = 0; i < 64; ++i) {
-      var b = key[i] || 0;
+      const b = key[i] || 0;
       oKeyPad[i] = 0x5c ^ b;
       iKeyPad[i] = 0x36 ^ b;
     }
@@ -830,11 +566,11 @@
   }
   HmacMd5.prototype = new Md5();
 
-  HmacMd5.prototype.finalize = function () {
+  HmacMd5.prototype.finalize = function() {
     Md5.prototype.finalize.call(this);
     if (this.inner) {
       this.inner = false;
-      var innerHash = this.array();
+      const innerHash = this.array();
       Md5.call(this, this.sharedMemory);
       this.update(this.oKeyPad);
       this.update(innerHash);
@@ -842,33 +578,16 @@
     }
   };
 
-  var exports = createMethod();
+  const exports = createMethod();
   exports.md5 = exports;
   exports.md5.hmac = createHmacMethod();
 
   if (COMMON_JS) {
     module.exports = exports;
   } else {
-    /**
-     * @method md5
-     * @description Md5 hash function, export to global in browsers.
-     * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
-     * @returns {String} md5 hashes
-     * @example
-     * md5(''); // d41d8cd98f00b204e9800998ecf8427e
-     * md5('The quick brown fox jumps over the lazy dog'); // 9e107d9d372bb6826bd81d3542a419d6
-     * md5('The quick brown fox jumps over the lazy dog.'); // e4d909c290d0fb1ca068ffaddf22cbd0
-     *
-     * // It also supports UTF-8 encoding
-     * md5('中文'); // a7bac2239fcdcb3a067903d8077c4a07
-     *
-     * // It also supports byte `Array`, `Uint8Array`, `ArrayBuffer`
-     * md5([]); // d41d8cd98f00b204e9800998ecf8427e
-     * md5(new Uint8Array([])); // d41d8cd98f00b204e9800998ecf8427e
-     */
     root.md5 = exports;
     if (AMD) {
-      define(function () {
+      define(function() {
         return exports;
       });
     }
